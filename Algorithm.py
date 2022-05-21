@@ -9,14 +9,15 @@ class Kmeans:
         self.data = data
         self.no_of_centers = no_of_centers
 
-
     def get_centers_simple_method(self):
-        centers = self.data.sample(self.no_of_centers)
+        shuffled_data = self.data.sample(frac=1).reset_index(drop=True)
+        centers = shuffled_data.sample(self.no_of_centers)
         return centers
 
     def get_centers_uniform_method(self):
-        min_, max_ = np.min(self.data, axis=0), np.max(self.data, axis=0)
-        centers = pd.DataFrame([np.random.uniform(min_, max_) for _ in range(self.no_of_centers)], columns=self.data.columns)
+        shuffled_data = self.data.sample(frac=1).reset_index(drop=True)
+        min_, max_ = np.min(shuffled_data, axis=0), np.max(shuffled_data, axis=0)
+        centers = pd.DataFrame([np.random.uniform(min_, max_) for _ in range(self.no_of_centers)], columns=shuffled_data.columns)
         return centers
 
     def get_clusters_simple_method(self, centers):
@@ -56,6 +57,7 @@ class Kmeans:
 def scaler(data):
     return (data - data.min()) / (data.max() - data.min())
 
+
 def get_2D_graph(data, centers, closest, x_name, y_name):
     plt.scatter(data[x_name], data[y_name], c=closest)
     plt.scatter(centers[x_name], centers[y_name], c='red')
@@ -63,7 +65,8 @@ def get_2D_graph(data, centers, closest, x_name, y_name):
     plt.ylabel(y_name)
     plt.show()
 
-def check_labels(clusters, labels,cluster_col_name,label_col_name):
+
+def check_labels(clusters, labels, cluster_col_name, label_col_name):
     default_idx = [i for i in range(len(clusters))]
     df = pd.DataFrame(data=clusters, columns=[cluster_col_name], index=default_idx)
     df[label_col_name] = labels
