@@ -9,18 +9,18 @@ class Kmeans:
         self.data = data
         self.no_of_centers = no_of_centers
 
-    def get_centers_simple_method(self):
-        shuffled_data = self.data.sample(frac=1).reset_index(drop=True)
-        centers = shuffled_data.sample(self.no_of_centers)
+    def get_init_centers_simple_method(self):
+        # shuffled_data = self.data.sample(frac=1).reset_index(drop=True)
+        centers = self.data.sample(self.no_of_centers)
         return centers
 
-    def get_centers_uniform_method(self):
+    def get_init_centers_uniform_method(self):
         shuffled_data = self.data.sample(frac=1).reset_index(drop=True)
         min_, max_ = np.min(shuffled_data, axis=0), np.max(shuffled_data, axis=0)
         centers = pd.DataFrame([np.random.uniform(min_, max_) for _ in range(self.no_of_centers)], columns=shuffled_data.columns)
         return centers
 
-    def get_clusters_simple_method(self, centers):
+    def get_final_centers_simple_method(self, centers):
         distances = np.zeros((len(self.data.index), self.no_of_centers))
         closest = np.argmin(distances, axis=1)
 
@@ -39,7 +39,7 @@ class Kmeans:
 
             return closest, centers
 
-    def get_clusters_iteration_method(self, centers, iteration=50):
+    def get_final_centers_iteration_method(self, centers, iteration=50):
         distances = np.zeros((len(self.data.index), self.no_of_centers))
 
         for _ in range(iteration):
@@ -66,13 +66,26 @@ def get_2D_graph(data, centers, closest, x_name, y_name):
     plt.show()
 
 
-def check_labels(clusters, labels, cluster_col_name, label_col_name):
-    default_idx = [i for i in range(len(clusters))]
-    df = pd.DataFrame(data=clusters, columns=[cluster_col_name], index=default_idx)
-    df[label_col_name] = labels
-    conditions = [df[cluster_col_name] == df[label_col_name],
-                  df[cluster_col_name] != df[label_col_name]]
-    choices = [int(1), int(0)]
-    df['check'] = np.select(conditions, choices, default=1)
+def get_results(method, file_name='results'):
+    results = []
+    for _ in range(100):
+        results.append(method())
 
-    return df[df['check'] == 1]['check'].sum() / len(df.index)
+    print(results)
+    print(np.mean(results))
+    default_idx = [i for i in range(len(results))]
+    df_loop_results = pd.DataFrame(results, index=default_idx, columns=[file_name])
+
+    return df_loop_results.to_csv(file_name)
+
+#
+# def check_labels(centers, labels, center_col_name = 'centers', label_col_name = 'labels'):
+#     default_idx = [i for i in range(len(centers))]
+#     df = pd.DataFrame(data=centers, columns=[center_col_name], index=default_idx)
+#     df[label_col_name] = labels
+#     conditions = [df[center_col_name] == df[label_col_name],
+#                   df[center_col_name] != df[label_col_name]]
+#     choices = [int(1), int(0)]
+#     df['check'] = np.select(conditions, choices, default=1)
+#
+#     return df[df['check'] == 1]['check'].sum() / len(df.index)
