@@ -49,7 +49,7 @@ class Kmeans:
 
 
 def scaler(data):
-    return (data - data.min()) / (data.max() - data.min())
+    return (data - data.std()) / data.mean()
 
 
 def get_2D_graph(data, centers, closest, x_name, y_name):
