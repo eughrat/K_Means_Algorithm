@@ -9,25 +9,33 @@ class Kmeans:
         self.data = data
         self.no_of_centers = no_of_centers
 
-    def get_init_centers_simple_method(self):
-        # shuffled_data = self.data.sample(frac=1).reset_index(drop=True)
+    def get_init_centers(self):
         centers = self.data.sample(self.no_of_centers)
+
         return centers
 
-    def get_init_centers_uniform_method(self):
-        shuffled_data = self.data.sample(frac=1).reset_index(drop=True)
-        min_, max_ = np.min(shuffled_data, axis=0), np.max(shuffled_data, axis=0)
-        centers = pd.DataFrame([np.random.uniform(min_, max_) for _ in range(self.no_of_centers)], columns=shuffled_data.columns)
+    def get_init_centers_plusplus(self):
+        centers = pd.DataFrame(self.data.sample(1))
+
+        for _ in range(self.no_of_centers - 1):
+
+            for j in range(len(centers)):
+                init_distances = ((self.data.values - centers.iloc[[j]].values) ** 2).sum(axis=1)
+
+            next_center = self.data.iloc[[np.argmax(init_distances)]]
+
+            centers.loc[len(centers.index)] = next_center.iloc[0,:]
+
         return centers
 
-    def get_final_centers_simple_method(self, centers):
+    def get_final_centers(self, centers):
         distances = np.zeros((len(self.data.index), self.no_of_centers))
-        closest = np.argmin(distances, axis=1)
+        closest = np.zeros(len(self.data)).astype(int)
 
         while True:
             old_closest = closest.copy()
 
-            for i in range(3):
+            for i in range(len(centers)):
                 distances[:, i] = (((self.data.iloc[:, :] - centers.iloc[i, :]) ** 2).sum(axis=1)) ** 0.5
             closest = np.argmin(distances, axis=1)
 
@@ -36,20 +44,6 @@ class Kmeans:
 
             if all(closest == old_closest):
                 break
-
-            return closest, centers
-
-    def get_final_centers_iteration_method(self, centers, iteration=50):
-        distances = np.zeros((len(self.data.index), self.no_of_centers))
-
-        for _ in range(iteration):
-
-            for i in range(3):
-                distances[:, i] = (((self.data.iloc[:, :] - centers.iloc[i, :]) ** 2).sum(axis=1)) ** 0.5
-            closest = np.argmin(distances, axis=1)
-
-            for i in range(len(centers.index)):
-                centers.iloc[i] = self.data[closest == i].mean(axis=0)
 
             return closest, centers
 
@@ -77,15 +71,3 @@ def get_results(method, file_name='results'):
     df_loop_results = pd.DataFrame(results, index=default_idx, columns=[file_name])
 
     return df_loop_results.to_csv(file_name)
-
-#
-# def check_labels(centers, labels, center_col_name = 'centers', label_col_name = 'labels'):
-#     default_idx = [i for i in range(len(centers))]
-#     df = pd.DataFrame(data=centers, columns=[center_col_name], index=default_idx)
-#     df[label_col_name] = labels
-#     conditions = [df[center_col_name] == df[label_col_name],
-#                   df[center_col_name] != df[label_col_name]]
-#     choices = [int(1), int(0)]
-#     df['check'] = np.select(conditions, choices, default=1)
-#
-#     return df[df['check'] == 1]['check'].sum() / len(df.index)
